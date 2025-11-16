@@ -1,413 +1,196 @@
-# RESTful API Go Fiber Boilerplate
+[![GitHub Workflow Status (branch)](https://img.shields.io/github/actions/workflow/status/golang-migrate/migrate/ci.yaml?branch=master)](https://github.com/golang-migrate/migrate/actions/workflows/ci.yaml?query=branch%3Amaster)
+[![GoDoc](https://pkg.go.dev/badge/github.com/golang-migrate/migrate)](https://pkg.go.dev/github.com/golang-migrate/migrate/v4)
+[![Coverage Status](https://img.shields.io/coveralls/github/golang-migrate/migrate/master.svg)](https://coveralls.io/github/golang-migrate/migrate?branch=master)
+[![packagecloud.io](https://img.shields.io/badge/deb-packagecloud.io-844fec.svg)](https://packagecloud.io/golang-migrate/migrate?filter=debs)
+[![Docker Pulls](https://img.shields.io/docker/pulls/migrate/migrate.svg)](https://hub.docker.com/r/migrate/migrate/)
+![Supported Go Versions](https://img.shields.io/badge/Go-1.24%2C%201.25-lightgrey.svg)
+[![GitHub Release](https://img.shields.io/github/release/golang-migrate/migrate.svg)](https://github.com/golang-migrate/migrate/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/golang-migrate/migrate/v4)](https://goreportcard.com/report/github.com/golang-migrate/migrate/v4)
 
-![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/indrayyana/go-fiber-boilerplate)](https://goreportcard.com/report/github.com/indrayyana/go-fiber-boilerplate)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
-![Repository size](https://img.shields.io/github/repo-size/indrayyana/go-fiber-boilerplate?color=56BEB8)
-![Build](https://github.com/indrayyana/go-fiber-boilerplate/workflows/Build/badge.svg)
-![Test](https://github.com/indrayyana/go-fiber-boilerplate/workflows/Test/badge.svg)
-![Linter](https://github.com/indrayyana/go-fiber-boilerplate/workflows/Linter/badge.svg)
+# migrate
 
-A boilerplate/starter project for quickly building RESTful APIs using Go, Fiber, and PostgreSQL. Inspired by the Express boilerplate.
+__Database migrations written in Go. Use as [CLI](#cli-usage) or import as [library](#use-in-your-go-project).__
 
-The app comes with many built-in features, such as authentication using JWT and Google OAuth2, request validation, unit and integration tests, docker support, API documentation, pagination, etc. For more details, check the features list below.
+* Migrate reads migrations from [sources](#migration-sources)
+   and applies them in correct order to a [database](#databases).
+* Drivers are "dumb", migrate glues everything together and makes sure the logic is bulletproof.
+   (Keeps the drivers lightweight, too.)
+* Database drivers don't assume things or try to correct user input. When in doubt, fail.
 
-## Quick Start
+Forked from [mattes/migrate](https://github.com/mattes/migrate)
 
-To create a project, simply run:
+## Databases
 
-```bash
-go mod init <project-name>
-```
+Database drivers run migrations. [Add a new database?](database/driver.go)
 
-## Manual Installation
+* [PostgreSQL](database/postgres)
+* [PGX v4](database/pgx)
+* [PGX v5](database/pgx/v5)
+* [Redshift](database/redshift)
+* [Ql](database/ql)
+* [Cassandra / ScyllaDB](database/cassandra)
+* [SQLite](database/sqlite)
+* [SQLite3](database/sqlite3) ([todo #165](https://github.com/mattes/migrate/issues/165))
+* [SQLCipher](database/sqlcipher)
+* [MySQL / MariaDB](database/mysql)
+* [Neo4j](database/neo4j)
+* [MongoDB](database/mongodb)
+* [CrateDB](database/crate) ([todo #170](https://github.com/mattes/migrate/issues/170))
+* [Shell](database/shell) ([todo #171](https://github.com/mattes/migrate/issues/171))
+* [Google Cloud Spanner](database/spanner)
+* [CockroachDB](database/cockroachdb)
+* [YugabyteDB](database/yugabytedb)
+* [ClickHouse](database/clickhouse)
+* [Firebird](database/firebird)
+* [MS SQL Server](database/sqlserver)
+* [rqlite](database/rqlite)
 
-If you would still prefer to do the installation manually, follow these steps:
+### Database URLs
 
-Clone the repo:
+Database connection strings are specified via URLs. The URL format is driver dependent but generally has the form: `dbdriver://username:password@host:port/dbname?param1=true&param2=false`
 
-```bash
-git clone --depth 1 https://github.com/indrayyana/go-fiber-boilerplate.git
-cd go-fiber-boilerplate
-rm -rf ./.git
-```
+Any [reserved URL characters](https://en.wikipedia.org/wiki/Percent-encoding#Percent-encoding_reserved_characters) need to be escaped. Note, the `%` character also [needs to be escaped](https://en.wikipedia.org/wiki/Percent-encoding#Percent-encoding_the_percent_character)
 
-Install the dependencies:
+Explicitly, the following characters need to be escaped:
+`!`, `#`, `$`, `%`, `&`, `'`, `(`, `)`, `*`, `+`, `,`, `/`, `:`, `;`, `=`, `?`, `@`, `[`, `]`
 
-```bash
-go mod tidy
-```
-
-Set the environment variables:
-
-```bash
-cp .env.example .env
-
-# open .env and modify the environment variables (if needed)
-```
-
-## Table of Contents
-
-- [Features](#features)
-- [Commands](#commands)
-- [Environment Variables](#environment-variables)
-- [Project Structure](#project-structure)
-- [API Documentation](#api-documentation)
-- [Error Handling](#error-handling)
-- [Validation](#validation)
-- [Authentication](#authentication)
-- [Authorization](#authorization)
-- [Logging](#logging)
-- [Linting](#linting)
-- [Contributing](#contributing)
-
-## Features
-
-- **SQL database**: [PostgreSQL](https://www.postgresql.org) Object Relation Mapping using [Gorm](https://gorm.io)
-- **Database migrations**: with [golang-migrate](https://github.com/golang-migrate/migrate)
-- **Validation**: request data validation using [Package validator](https://github.com/go-playground/validator)
-- **Logging**: using [Logrus](https://github.com/sirupsen/logrus) and [Fiber-Logger](https://docs.gofiber.io/api/middleware/logger)
-- **Testing**: unit and integration tests using [Testify](https://github.com/stretchr/testify) and formatted test output using [gotestsum](https://github.com/gotestyourself/gotestsum)
-- **Error handling**: centralized error handling mechanism
-- **API documentation**: with [Swag](https://github.com/swaggo/swag) and [Swagger](https://github.com/gofiber/swagger)
-- **Sending email**: using [Gomail](https://github.com/go-gomail/gomail)
-- **Environment variables**: using [Viper](https://github.com/spf13/viper)
-- **Security**: set security HTTP headers using [Fiber-Helmet](https://docs.gofiber.io/api/middleware/helmet)
-- **CORS**: Cross-Origin Resource-Sharing enabled using [Fiber-CORS](https://docs.gofiber.io/api/middleware/cors)
-- **Compression**: gzip compression with [Fiber-Compress](https://docs.gofiber.io/api/middleware/compress)
-- **Docker support**
-- **Linting**: with [golangci-lint](https://golangci-lint.run)
-
-## Commands
-
-Running locally:
+It's easiest to always run the URL parts of your DB connection URL (e.g. username, password, etc) through an URL encoder. See the example Python snippets below:
 
 ```bash
-make start
+$ python3 -c 'import urllib.parse; print(urllib.parse.quote(input("String to encode: "), ""))'
+String to encode: FAKEpassword!#$%&'()*+,/:;=?@[]
+FAKEpassword%21%23%24%25%26%27%28%29%2A%2B%2C%2F%3A%3B%3D%3F%40%5B%5D
+$ python2 -c 'import urllib; print urllib.quote(raw_input("String to encode: "), "")'
+String to encode: FAKEpassword!#$%&'()*+,/:;=?@[]
+FAKEpassword%21%23%24%25%26%27%28%29%2A%2B%2C%2F%3A%3B%3D%3F%40%5B%5D
+$
 ```
 
-Or running with live reload:
+## Migration Sources
+
+Source drivers read migrations from local or remote sources. [Add a new source?](source/driver.go)
+
+* [Filesystem](source/file) - read from filesystem
+* [io/fs](source/iofs) - read from a Go [io/fs](https://pkg.go.dev/io/fs#FS)
+* [Go-Bindata](source/go_bindata) - read from embedded binary data ([jteeuwen/go-bindata](https://github.com/jteeuwen/go-bindata))
+* [pkger](source/pkger) - read from embedded binary data ([markbates/pkger](https://github.com/markbates/pkger))
+* [GitHub](source/github) - read from remote GitHub repositories
+* [GitHub Enterprise](source/github_ee) - read from remote GitHub Enterprise repositories
+* [Bitbucket](source/bitbucket) - read from remote Bitbucket repositories
+* [Gitlab](source/gitlab) - read from remote Gitlab repositories
+* [AWS S3](source/aws_s3) - read from Amazon Web Services S3
+* [Google Cloud Storage](source/google_cloud_storage) - read from Google Cloud Platform Storage
+
+## CLI usage
+
+* Simple wrapper around this library.
+* Handles ctrl+c (SIGINT) gracefully.
+* No config search paths, no config files, no magic ENV var injections.
+
+[CLI Documentation](cmd/migrate) (includes CLI install instructions)
+
+### Basic usage
 
 ```bash
-air
+$ migrate -source file://path/to/migrations -database postgres://localhost:5432/database up 2
 ```
 
-> [!NOTE]
-> Make sure you have `Air` installed.\
-> See 👉 [How to install Air](https://github.com/air-verse/air)
-
-Testing:
+### Docker usage
 
 ```bash
-# run all tests
-make tests
-
-# run all tests with gotestsum format
-make testsum
-
-# run test for the selected function name
-make tests-TestUserModel
+$ docker run -v {{ migration dir }}:/migrations --network host migrate/migrate
+    -path=/migrations/ -database postgres://localhost:5432/database up 2
 ```
 
-Docker:
+## Use in your Go project
 
-```bash
-# run docker container
-make docker
+* API is stable and frozen for this release (v3 & v4).
+* Uses [Go modules](https://golang.org/cmd/go/#hdr-Modules__module_versions__and_more) to manage dependencies.
+* To help prevent database corruptions, it supports graceful stops via `GracefulStop chan bool`.
+* Bring your own logger.
+* Uses `io.Reader` streams internally for low memory overhead.
+* Thread-safe and no goroutine leaks.
 
-# run all tests in a docker container
-make docker-test
-```
-
-Linting:
-
-```bash
-# run lint
-make lint
-```
-
-Swagger:
-
-```bash
-# generate the swagger documentation
-make swagger
-```
-
-Migration:
-
-```bash
-# Create migration
-make migration-<table-name>
-
-# Example for table users
-make migration-users
-```
-
-```bash
-# run migration up in local
-make migrate-up
-
-# run migration down in local
-make migrate-down
-
-# run migration up in docker container
-make migrate-docker-up
-
-# run migration down all in docker container
-make migrate-docker-down
-```
-
-## Environment Variables
-
-The environment variables can be found and modified in the `.env` file. They come with these default values:
-
-```bash
-# server configuration
-# Env value : prod || dev
-APP_ENV=dev
-APP_HOST=0.0.0.0
-APP_PORT=3000
-
-# database configuration
-DB_HOST=postgresdb
-DB_USER=postgres
-DB_PASSWORD=thisisasamplepassword
-DB_NAME=fiberdb
-DB_PORT=5432
-
-# JWT
-# JWT secret key
-JWT_SECRET=thisisasamplesecret
-# Number of minutes after which an access token expires
-JWT_ACCESS_EXP_MINUTES=30
-# Number of days after which a refresh token expires
-JWT_REFRESH_EXP_DAYS=30
-# Number of minutes after which a reset password token expires
-JWT_RESET_PASSWORD_EXP_MINUTES=10
-# Number of minutes after which a verify email token expires
-JWT_VERIFY_EMAIL_EXP_MINUTES=10
-
-# SMTP configuration options for the email service
-SMTP_HOST=email-server
-SMTP_PORT=587
-SMTP_USERNAME=email-server-username
-SMTP_PASSWORD=email-server-password
-EMAIL_FROM=support@yourapp.com
-
-# OAuth2 configuration
-GOOGLE_CLIENT_ID=yourapps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=thisisasamplesecret
-REDIRECT_URL=http://localhost:3000/v1/auth/google-callback
-```
-
-## Project Structure
-
-```
-src\
- |--config\         # Environment variables and configuration related things
- |--controller\     # Route controllers (controller layer)
- |--database\       # Database connection & migrations
- |--docs\           # Swagger files
- |--middleware\     # Custom fiber middlewares
- |--model\          # Postgres models (data layer)
- |--response\       # Response models
- |--router\         # Routes
- |--service\        # Business logic (service layer)
- |--utils\          # Utility classes and functions
- |--validation\     # Request data validation schemas
- |--main.go         # Fiber app
-```
-
-## API Documentation
-
-To view the list of available APIs and their specifications, run the server and go to `http://localhost:3000/v1/docs` in your browser.
-
-![Auth](https://indrayyana.github.io/assets/images/swagger1.png)
-![User](https://indrayyana.github.io/assets/images/swagger2.png)
-
-This documentation page is automatically generated using the [Swag](https://github.com/swaggo/swag) definitions written as comments in the controller files.
-
-See 👉 [Declarative Comments Format.](https://github.com/swaggo/swag#declarative-comments-format)
-
-## API Endpoints
-
-List of available routes:
-
-**Auth routes**:\
-`POST /v1/auth/register` - register\
-`POST /v1/auth/login` - login\
-`POST /v1/auth/logout` - logout\
-`POST /v1/auth/refresh-tokens` - refresh auth tokens\
-`POST /v1/auth/forgot-password` - send reset password email\
-`POST /v1/auth/reset-password` - reset password\
-`POST /v1/auth/send-verification-email` - send verification email\
-`POST /v1/auth/verify-email` - verify email\
-`GET /v1/auth/google` - login with google account
-
-**User routes**:\
-`POST /v1/users` - create a user\
-`GET /v1/users` - get all users\
-`GET /v1/users/:userId` - get user\
-`PATCH /v1/users/:userId` - update user\
-`DELETE /v1/users/:userId` - delete user
-
-## Error Handling
-
-The app includes a custom error handling mechanism, which can be found in the `src/utils/error.go` file.
-
-It also utilizes the `Fiber-Recover` middleware to gracefully recover from any panic that might occur in the handler stack, preventing the app from crashing unexpectedly.
-
-The error handling process sends an error response in the following format:
-
-```json
-{
-  "code": 404,
-  "status": "error",
-  "message": "Not found"
-}
-```
-
-Fiber provides a custom error struct using `fiber.NewError()`, where you can specify a response code and a message. This error can then be returned from any part of your code, and Fiber's `ErrorHandler` will automatically catch it.
-
-For example, if you are trying to retrieve a user from the database but the user is not found, and you want to return a 404 error, the code might look like this:
-
-```go
-func (s *userService) GetUserByID(c *fiber.Ctx, id string) {
-	user := new(model.User)
-
-	err := s.DB.WithContext(c.Context()).First(user, "id = ?", id).Error
-
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return fiber.NewError(fiber.StatusNotFound, "User not found")
-	}
-}
-```
-
-## Validation
-
-Request data is validated using [Package validator](https://github.com/go-playground/validator). Check the [documentation](https://pkg.go.dev/github.com/go-playground/validator/v10) for more details on how to write validations.
-
-The validation schemas are defined in the `src/validation` directory and are used within the services by passing them to the validation logic. In this example, the CreateUser method in the userService uses the `validation.CreateUser` schema to validate incoming request data before processing it. The validation is handled by the `Validate.Struct` method, which checks the request data against the schema.
+__[Go Documentation](https://pkg.go.dev/github.com/golang-migrate/migrate/v4)__
 
 ```go
 import (
-	"app/src/model"
-	"app/src/validation"
-
-	"github.com/gofiber/fiber/v2"
+    "github.com/golang-migrate/migrate/v4"
+    _ "github.com/golang-migrate/migrate/v4/database/postgres"
+    _ "github.com/golang-migrate/migrate/v4/source/github"
 )
 
-func (s *userService) CreateUser(c *fiber.Ctx, req validation.CreateUser) (*model.User, error) {
-	if err := s.Validate.Struct(&req); err != nil {
-		return nil, err
-	}
+func main() {
+    m, err := migrate.New(
+        "github://mattes:personal-access-token@mattes/migrate_test",
+        "postgres://localhost:5432/database?sslmode=enable")
+    m.Steps(2)
 }
 ```
 
-## Authentication
-
-To require authentication for certain routes, you can use the `Auth` middleware.
+Want to use an existing database client?
 
 ```go
 import (
-	"app/src/controllers"
-	m "app/src/middleware"
-	"app/src/services"
-
-	"github.com/gofiber/fiber/v2"
+    "database/sql"
+    _ "github.com/lib/pq"
+    "github.com/golang-migrate/migrate/v4"
+    "github.com/golang-migrate/migrate/v4/database/postgres"
+    _ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
-func SetupRoutes(app *fiber.App, u services.UserService, t services.TokenService) {
-  userController := controllers.NewUserController(u, t)
-	app.Post("/users", m.Auth(u), userController.CreateUser)
+func main() {
+    db, err := sql.Open("postgres", "postgres://localhost:5432/database?sslmode=enable")
+    driver, err := postgres.WithInstance(db, &postgres.Config{})
+    m, err := migrate.NewWithDatabaseInstance(
+        "file:///migrations",
+        "postgres", driver)
+    m.Up() // or m.Steps(2) if you want to explicitly set the number of migrations to run
 }
 ```
 
-These routes require a valid JWT access token in the Authorization request header using the Bearer schema. If the request does not contain a valid access token, an Unauthorized (401) error is thrown.
+## Getting started
 
-**Generating Access Tokens**:
+Go to [getting started](GETTING_STARTED.md)
 
-An access token can be generated by making a successful call to the register (`POST /v1/auth/register`) or login (`POST /v1/auth/login`) endpoints. The response of these endpoints also contains refresh tokens (explained below).
+## Tutorials
 
-An access token is valid for 30 minutes. You can modify this expiration time by changing the `JWT_ACCESS_EXP_MINUTES` environment variable in the .env file.
+* [CockroachDB](database/cockroachdb/TUTORIAL.md)
+* [PostgreSQL](database/postgres/TUTORIAL.md)
 
-**Refreshing Access Tokens**:
+(more tutorials to come)
 
-After the access token expires, a new access token can be generated, by making a call to the refresh token endpoint (`POST /v1/auth/refresh-tokens`) and sending along a valid refresh token in the request body. This call returns a new access token and a new refresh token.
+## Migration files
 
-A refresh token is valid for 30 days. You can modify this expiration time by changing the `JWT_REFRESH_EXP_DAYS` environment variable in the .env file.
+Each migration has an up and down migration. [Why?](FAQ.md#why-two-separate-files-up-and-down-for-a-migration)
 
-## Authorization
-
-The `Auth` middleware can also be used to require certain rights/permissions to access a route.
-
-```go
-import (
-	"app/src/controllers"
-	m "app/src/middleware"
-	"app/src/services"
-
-	"github.com/gofiber/fiber/v2"
-)
-
-func SetupRoutes(app *fiber.App, u services.UserService, t services.TokenService) {
-  userController := controllers.NewUserController(u, t)
-	app.Post("/users", m.Auth(u, "manageUsers"), userController.CreateUser)
-}
+```bash
+1481574547_create_users_table.up.sql
+1481574547_create_users_table.down.sql
 ```
 
-In the example above, an authenticated user can access this route only if that user has the `manageUsers` permission.
+[Best practices: How to write migrations.](MIGRATIONS.md)
 
-The permissions are role-based. You can view the permissions/rights of each role in the `src/config/roles.go` file.
+## Coming from another db migration tool?
 
-If the user making the request does not have the required permissions to access this route, a Forbidden (403) error is thrown.
+Check out [migradaptor](https://github.com/musinit/migradaptor/).
+*Note: migradaptor is not affiliated or supported by this project*
 
-## Logging
+## Versions
 
-Import the logger from `src/utils/logrus.go`. It is using the [Logrus](https://github.com/sirupsen/logrus) logging library.
+Version | Supported? | Import | Notes
+--------|------------|--------|------
+**master** | :white_check_mark: | `import "github.com/golang-migrate/migrate/v4"` | New features and bug fixes arrive here first |
+**v4** | :white_check_mark: | `import "github.com/golang-migrate/migrate/v4"` | Used for stable releases |
+**v3** | :x: | `import "github.com/golang-migrate/migrate"` (with package manager) or `import "gopkg.in/golang-migrate/migrate.v3"` (not recommended) | **DO NOT USE** - No longer supported |
 
-Logging should be done according to the following severity levels (ascending order from most important to least important):
+## Development and Contributing
 
-```go
-import "app/src/utils"
+Yes, please! [`Makefile`](Makefile) is your friend,
+read the [development guide](CONTRIBUTING.md).
 
-utils.Log.Panic('message') // Calls panic() after logging
-utils.Log.Fatal('message'); // Calls os.Exit(1) after logging
-utils.Log.Error('message');
-utils.Log.Warn('message');
-utils.Log.Info('message');
-utils.Log.Debug('message');
-utils.Log.Trace('message');
-```
+Also have a look at the [FAQ](FAQ.md).
 
-> [!NOTE]
-> API request information (request url, response code, timestamp, etc.) are also automatically logged (using [Fiber-Logger](https://docs.gofiber.io/api/middleware/logger)).
+---
 
-## Linting
-
-Linting is done using [golangci-lint](https://golangci-lint.run)
-
-See 👉 [How to install golangci-lint](https://golangci-lint.run/welcome/install)
-
-To modify the golangci-lint configuration, update the `.golangci.yml` file.
-
-## Contributing
-
-Contributions are more than welcome! Please check out the [contributing guide](CONTRIBUTING.md).
-
-If you find this boilerplate useful, consider giving it a star! ⭐
-
-## Inspirations
-
-- [hagopj13/node-express-boilerplate](https://github.com/hagopj13/node-express-boilerplate)
-- [khannedy/golang-clean-architecture](https://github.com/khannedy/golang-clean-architecture)
-- [zexoverz/express-prisma-template](https://github.com/zexoverz/express-prisma-template)
-
-## License
-
-[MIT](LICENSE)
-
-## Contributors
-
-[![Contributors](https://contrib.rocks/image?c=6&repo=indrayyana/go-fiber-boilerplate)](https://github.com/indrayyana/go-fiber-boilerplate/graphs/contributors)
+Looking for alternatives? [https://awesome-go.com/#database](https://awesome-go.com/#database).
