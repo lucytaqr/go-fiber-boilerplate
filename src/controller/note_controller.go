@@ -29,78 +29,78 @@ func getUserFromCtx(c *fiber.Ctx) (*model.User, error) {
 
 // POST /v1/notes
 func (ctl *NoteController) CreateNote(c *fiber.Ctx) error {
-	user, err := getUserFromCtx(c)
-	if err != nil {
-		return err
-	}
+    user, err := getUserFromCtx(c)
+    if err != nil {
+        return err
+    }
 
-	var req validation.CreateNote
-	if err := c.BodyParser(&req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
-	}
+    var req validation.CreateNote
+    if err := c.BodyParser(&req); err != nil {
+        return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
+    }
 
-	note, err := ctl.NoteService.CreateNote(c, user.ID, req)
-	if err != nil {
-		return err
-	}
+    note, err := ctl.NoteService.CreateNote(c, user.ID.String(), req)
+    if err != nil {
+        return err
+    }
 
-	return c.Status(fiber.StatusCreated).JSON(note)
+    return c.Status(fiber.StatusCreated).JSON(note)
 }
 
 // GET /v1/notes
 func (ctl *NoteController) GetNotes(c *fiber.Ctx) error {
-	user, err := getUserFromCtx(c)
-	if err != nil {
-		return err
-	}
+    user, err := getUserFromCtx(c)
+    if err != nil {
+        return err
+    }
 
-	notes, err := ctl.NoteService.GetNotes(c, user.ID)
-	if err != nil {
-		return err
-	}
+    notes, err := ctl.NoteService.GetNotes(c, user.ID.String())
+    if err != nil {
+        return err
+    }
 
-	return c.JSON(notes)
+    return c.JSON(notes)
 }
 
 // GET /v1/notes/:noteId
 func (ctl *NoteController) GetNoteByID(c *fiber.Ctx) error {
-	user, err := getUserFromCtx(c)
-	if err != nil {
-		return err
-	}
+    user, err := getUserFromCtx(c)
+    if err != nil {
+        return err
+    }
 
-	idParam := c.Params("noteId")
-	noteID64, err := strconv.ParseUint(idParam, 10, 32)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid note id")
-	}
-	noteID := uint(noteID64)
+    idParam := c.Params("noteId")
+    noteID64, err := strconv.ParseUint(idParam, 10, 32)
+    if err != nil {
+        return fiber.NewError(fiber.StatusBadRequest, "Invalid note id")
+    }
+    noteID := uint(noteID64)
 
-	note, err := ctl.NoteService.GetNoteByID(c, user.ID, noteID)
-	if err != nil {
-		return err
-	}
+    note, err := ctl.NoteService.GetNoteByID(c, user.ID.String(), noteID)
+    if err != nil {
+        return err
+    }
 
-	return c.JSON(note)
+    return c.JSON(note)
 }
 
 // DELETE /v1/notes/:noteId
 func (ctl *NoteController) DeleteNote(c *fiber.Ctx) error {
-	user, err := getUserFromCtx(c)
-	if err != nil {
-		return err
-	}
+    user, err := getUserFromCtx(c)
+    if err != nil {
+        return err
+    }
 
-	idParam := c.Params("noteId")
-	noteID64, err := strconv.ParseUint(idParam, 10, 32)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid note id")
-	}
-	noteID := uint(noteID64)
+    idParam := c.Params("noteId")
+    noteID64, err := strconv.ParseUint(idParam, 10, 32)
+    if err != nil {
+        return fiber.NewError(fiber.StatusBadRequest, "Invalid note id")
+    }
+    noteID := uint(noteID64)
 
-	if err := ctl.NoteService.DeleteNote(c, user.ID, noteID); err != nil {
-		return err
-	}
+    if err := ctl.NoteService.DeleteNote(c, user.ID.String(), noteID); err != nil {
+        return err
+    }
 
-	return c.SendStatus(fiber.StatusNoContent)
+    return c.SendStatus(fiber.StatusNoContent)
 }
